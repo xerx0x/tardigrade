@@ -203,7 +203,7 @@ export function InfiniteGridMapComponent() {
     // Add label below the tardigrade
     ctx.fillStyle = 'black';
     ctx.font = '15px Arial';
-    ctx.fillText('Fish', screenX - 20, screenY + tardigradeSize * 0.5);
+    ctx.fillText('Tardi', screenX - 20, screenY + tardigradeSize * 0.5);
   }, [camera, tardigradePosition, cellSize, tardigradeSize]);
 
 
@@ -663,7 +663,7 @@ export function InfiniteGridMapComponent() {
           <div className="relative">
             <img
               src="/tardi.png"
-              alt="Fish"
+              alt="Tardi"
               className={`w-16 h-16 mx-auto ${selectedHistoryItem?.x !== tardigradePosition.x || selectedHistoryItem?.y !== tardigradePosition.y ? 'grayscale opacity-30' : ''}`}
             />
             {(selectedHistoryItem?.x !== tardigradePosition.x || selectedHistoryItem?.y !== tardigradePosition.y) && (

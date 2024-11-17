@@ -56,7 +56,7 @@ export function ImprovedTooltip({
         <div className="relative">
           <img
             src="/tardi.png"
-            alt="Fish"
+            alt="Tardi"
             className={`w-16 h-16 mx-auto ${!isCurrentPosition ? 'grayscale opacity-30' : ''}`}
           />
           {!isCurrentPosition && (
