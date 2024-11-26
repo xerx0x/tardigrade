@@ -51,5 +51,10 @@ const TransactionSchema = new mongoose.Schema<ITransaction>({
     activity_type: { type: String, required: true },
 });
 
+const TardigradeThoughtsSchema = new mongoose.Schema({
+    text: { type: String, required: true },
+  });
+
 // Prevent mongoose from creating the model multiple times
 export const Transaction = mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema)
+export const TardigradeThoughts = mongoose.models.TardigradeThoughts || mongoose.model('TardigradeThoughts', TardigradeThoughtsSchema);
