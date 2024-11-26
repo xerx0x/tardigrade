@@ -83,3 +83,55 @@ body {
 .drawer-open {
   transform: translateY(0);
 }
+
+.typing {
+  position: relative;
+}
+.typing span {
+  content: "";
+  -webkit-animation: blink 1.5s infinite;
+          animation: blink 1.5s infinite;
+  -webkit-animation-fill-mode: both;
+          animation-fill-mode: both;
+  height: 10px;
+  width: 10px;
+  background: #ececec;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+}
+.typing span:nth-child(2) {
+  -webkit-animation-delay: 0.2s;
+          animation-delay: 0.2s;
+  margin-left: 15px;
+}
+.typing span:nth-child(3) {
+  -webkit-animation-delay: 0.4s;
+          animation-delay: 0.4s;
+  margin-left: 30px;
+}
+
+@-webkit-keyframes blink {
+  0% {
+    opacity: 0.1;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.1;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
