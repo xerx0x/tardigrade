@@ -50,7 +50,7 @@ export function ImprovedTooltip({
         left: `${mousePos.x + 10}px`,
         top: `${mousePos.y + 10}px`
       }}
-      className="bg-white/90 backdrop-blur-sm shadow-lg rounded-lg p-4 text-sm border border-gray-200 max-w-xs"
+      className="bg-black/90 backdrop-blur-sm shadow-lg rounded-lg p-4 text-sm border border-stone-600 max-w-xs"
     >
       <div className="mb-2">
         <div className="relative">
@@ -66,7 +66,7 @@ export function ImprovedTooltip({
           )}
         </div>
       </div>
-      <div className="font-medium text-gray-900 mb-2">
+      <div className="font-medium text-gray-200 mb-2">
         {isCurrentPosition ? (
           <span className="text-green-600">Current Position</span>
         ) : isGenesisPosition ? (
@@ -75,15 +75,15 @@ export function ImprovedTooltip({
           <span>{stepsAgo} steps ago</span>
         )}
       </div>
-      <div className="space-y-2 text-gray-600">
+      <div className="space-y-2 text-gray-300">
         <div className="flex justify-between items-center">
-          <span className="text-gray-500">Position:</span>
-          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+          <span className="text-gray-400">Position:</span>
+          <span className="font-mono bg-stone-800 px-2 py-1 rounded">
             ({hoveredHistoryItem.x}, {hoveredHistoryItem.y})
           </span>
         </div>
         <div>
-          <span className="text-gray-500 block mb-1">Activators:</span>
+          <span className="text-gray-300 block mb-1">Activators:</span>
           <div className="flex flex-wrap gap-1">
             {hoveredHistoryItem.affectedTransactions.slice(0, 3).map((tx, i) => (
               <a
@@ -91,7 +91,7 @@ export function ImprovedTooltip({
                 href={`https://solscan.io/tx/${tx}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-gray-100 px-2 py-1 rounded text-xs hover:bg-gray-200 transition-colors inline-block"
+                className="bg-stone-800 px-2 py-1 rounded text-xs hover:bg-gray-200 transition-colors inline-block"
               >
                 {shortenHash(tx)}
               </a>
