@@ -661,15 +661,15 @@ export function InfiniteGridMapComponent() {
       )}
 
       <Dialog open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-stone-900 border border-stone-600 text-gray-200">
           <div className="relative">
             <img
               src="/tardi.png"
               alt="Tardi"
-              className={`w-16 h-16 mx-auto ${selectedHistoryItem?.x !== tardigradePosition.x || selectedHistoryItem?.y !== tardigradePosition.y ? 'grayscale opacity-30' : ''}`}
+              className={`w-16 h-16 mx-auto ${selectedHistoryItem?.x !== tardigradePosition.x || selectedHistoryItem?.y !== tardigradePosition.y ? 'grayscale opacity-60' : ''}`}
             />
             {(selectedHistoryItem?.x !== tardigradePosition.x || selectedHistoryItem?.y !== tardigradePosition.y) && (
-              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-500">
+              <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
                 ?
               </div>
             )}
@@ -696,7 +696,7 @@ export function InfiniteGridMapComponent() {
                 <ScrollArea className="h-[200px]">
                   <div className="flex gap-1 flex-wrap">
                     {selectedHistoryItem.affectedTransactions.map((tx, i) => (
-                      <Badge key={i} variant="secondary" className="cursor-pointer hover:bg-secondary/80 text-gray-600">
+                      <Badge key={i} variant="secondary" className="cursor-pointer bg-stone-950 hover:bg-black text-gray-300">
                         <a
                           href={`https://solscan.io/tx/${tx}`}
                           target="_blank"
