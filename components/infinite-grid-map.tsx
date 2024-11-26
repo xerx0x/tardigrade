@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ImprovedTooltip } from './ToolTip';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
-
+import { Spotlight } from "@/components/ui/Spotlight";
+import AnimatedText from "@/components/ui/typing"
 const shortenHash = (hash: string): string => {
   if (!hash) return '';
   return `${hash.slice(0, 4)}...${hash.slice(-4)}`;
@@ -113,7 +114,7 @@ export function InfiniteGridMapComponent() {
     ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)'
     ctx.lineWidth = 0.5
     ctx.font = '10px Arial'
-    ctx.fillStyle = '#000'
+    ctx.fillStyle = '#ececec'
 
     const startX = Math.floor(camera.x / cellSize) * cellSize - camera.x
     const startY = Math.floor(camera.y / cellSize) * cellSize - camera.y
@@ -158,7 +159,7 @@ export function InfiniteGridMapComponent() {
   }, [camera, cellSize, dotSize])
 
   const drawtardigradeHistory = useCallback((ctx: CanvasRenderingContext2D) => {
-    ctx.fillStyle = 'rgba(128, 128, 128, 0.7)' // Light grey
+    ctx.fillStyle = 'rgb(235, 235, 235)' // Light grey
     // Skip drawing history point if it's at current tardigrade position
     historyScreenPositionsRef.current = [] // Reset the array
 
@@ -167,7 +168,7 @@ export function InfiniteGridMapComponent() {
       if (historyItem.x === tardigradePosition.x && historyItem.y === tardigradePosition.y) {
         ctx.fillStyle = 'rgba(128, 128, 128, 0)' // Very transparent grey
       } else {
-        ctx.fillStyle = 'rgba(128, 128, 128, 0.7)' // Regular semi-transparent grey
+        ctx.fillStyle = 'rgb(214, 214, 214)' // Regular semi-transparent grey
       }
 
       // If origin, make it red
@@ -201,8 +202,8 @@ export function InfiniteGridMapComponent() {
     }
 
     // Add label below the tardigrade
-    ctx.fillStyle = 'black';
-    ctx.font = '15px Arial';
+    ctx.fillStyle = 'white';
+    ctx.font = '12px Arial';
     ctx.fillText('Tardi', screenX - 20, screenY + tardigradeSize * 0.5);
   }, [camera, tardigradePosition, cellSize, tardigradeSize]);
 
@@ -434,7 +435,11 @@ export function InfiniteGridMapComponent() {
   };
 
   return (
-    <div className="relative w-screen h-screen">
+    <div className="relative w-screen h-screen overflow-hidden">
+      <Spotlight
+        className="-top-40 left-0 md:left-60 md:-top-20"
+        fill="white"
+      />
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -447,11 +452,11 @@ export function InfiniteGridMapComponent() {
         onTouchEnd={handleTouchEnd}
         className="cursor-move"
       />
-      {isLoading && <div className="absolute inset-0 flex items-center justify-center bg-white/50">
+      {isLoading && <div className="absolute inset-0 flex items-center justify-center bg-white/20">
         <Loader2 className="h-4 w-4 animate-spin" />
       </div>}
 
-      <div className="absolute top-4 left-4 flex flex-col gap-2">
+      <div className="absolute bottom-4 right-4 flex flex-col gap-2">
         <Button
           onClick={() => {
             const canvas = canvasRef.current;
@@ -466,7 +471,7 @@ export function InfiniteGridMapComponent() {
               render()
             }
           }}
-          className="w-10 h-10 rounded-full text-xl"
+          className="w-10 h-10 rounded-full bg-stone-900 border border-stone-600 text-xl"
         >
           +
         </Button>
@@ -484,13 +489,13 @@ export function InfiniteGridMapComponent() {
               render()
             }
           }}
-          className="w-10 h-10 rounded-full text-xl"
+          className="w-10 h-10 rounded-full bg-stone-900 border border-stone-600 text-xl"
         >
           -
         </Button>
       </div>
 
-      <Button onClick={() => locatetardigrade(true)} className="fixed bottom-4 md:left-1/2 md:-translate-x-1/2 left-4 font-bold flex items-center gap-2">
+      <Button onClick={() => locatetardigrade(true)} className="fixed bottom-4 md:left-1/2 md:-translate-x-1/2 bg-stone-900 border border-stone-600 left-4 font-bold flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
           <circle cx="12" cy="12" r="3" />
@@ -498,24 +503,14 @@ export function InfiniteGridMapComponent() {
         Locate the Tardigrade 
       </Button>
 
-      <div className="fixed bottom-4 right-4 flex gap-2">
-        <a
-          href="https://github.com/xerx0x/tardigrade"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-white hover:bg-gray-100 p-2 rounded-full shadow"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-          </svg>
-        </a>
+      <div className="fixed top-4 left-4 flex gap-2">
         <a
           href="https://x.com/tardionchain"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-white hover:bg-gray-100 p-2 rounded-full shadow"
+          className="bg-stone-900 border border-stone-600 p-2 rounded-full shadow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
           </svg>
         </a>
@@ -523,50 +518,57 @@ export function InfiniteGridMapComponent() {
           href="https://t.me/tardionchain"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-white hover:bg-gray-100 p-2 rounded-full shadow"
+          className="bg-stone-900 border border-stone-600 p-2 rounded-full shadow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21.2 5L2.5 12.8c-1.1.4-1.1 1.1-.2 1.4l4.7 1.5 1.8 5.6c.2.7.7.7 1 .4l2.8-2.3 5.5 4.2c1 .5 1.7.2 2-1l3.7-17.4c.4-1.5-.4-2.1-1.6-1.7z" />
           </svg>
         </a>
-        {/* <a
-          href="/whitepaper.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-white hover:bg-gray-100 p-2 rounded-full shadow"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-            <polyline points="10 9 9 9 8 9" />
-          </svg>
-        </a> */}
         <a
-          href="https://pump.fun/coin/"
+          href="https://pump.fun/coin/DTTLrCGbqn6fmNuKjGYqWFeQU5Hz153f5C3pNnxepump"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-white hover:bg-gray-100 p-2 rounded-full shadow"
+          className="bg-stone-900 border aspect-square border-stone-600 p-2 rounded-full shadow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 16 16">
             <path d="M1.828 8.9 8.9 1.827a4 4 0 1 1 5.657 5.657l-7.07 7.071A4 4 0 1 1 1.827 8.9Zm9.128.771 2.893-2.893a3 3 0 1 0-4.243-4.242L6.713 5.429z"/>
           </svg>
         </a>
+        <a
+          href="https://github.com/xerx0x/tardigrade"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-stone-900 border border-stone-600 p-2 rounded-full shadow"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+          </svg>
+        </a>
+      </div>
+      
+      <div className="fixed left-4 bottom-4 h-fit gap-2 w-72 max-w-72 flex flex-col">
+          <a
+            href="/whitepaper.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-300 hover:text-blue-400 flex bg-stone-900 border border-stone-600 w-full h-fit p-2 rounded-md items-center gap-1"
+          >
+            Read the whitepaper <ExternalLink className="h-3 w-3" />
+          </a>
+          <AnimatedText />
       </div>
 
-
       <div className="absolute top-4 right-4 flex flex-col items-end">
-        <div className="bg-white rounded shadow max-h-[300px] w-[300px] overflow-y-auto">
-          <div className="flex gap-2 mb-3 sticky top-0 bg-white p-2 z-10">
+        <div className="bg-stone-900 border border-stone-600 text-gray-200 rounded shadow max-h-[300px] w-[250px] overflow-y-auto">
+          <div className="flex gap-2 mb-3 sticky top-0 bg-stone-900 p-2 z-10">
             <button
-              className={`text-sm font-medium px-3 py-1 rounded-t border-b-2 ${activeTab === 'history' ? 'text-gray-700 border-gray-700' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              className={`text-sm font-medium px-3 py-1 rounded-t border-b-2 ${activeTab === 'history' ? 'text-gray-200 border-gray-400' : 'text-gray-300 border-transparent hover:text-gray-400'}`}
               onClick={() => setActiveTab('history')}
             >
               History
             </button>
             <button
-              className={`text-sm font-medium px-3 py-1 rounded-t border-b-2 ${activeTab === 'recent' ? 'text-gray-700 border-gray-700' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              className={`text-sm font-medium px-3 py-1 rounded-t border-b-2 ${activeTab === 'recent' ? 'text-gray-200 border-gray-400' : 'text-gray-300 border-transparent hover:text-gray-400'}`}
               onClick={() => setActiveTab('recent')}
             >
               Recent Inputs
@@ -577,7 +579,7 @@ export function InfiniteGridMapComponent() {
               {tardigradeHistory.sort((a, b) => b.index - a.index).map((pos, index) => (
                 <li
                   key={index}
-                  className="text-xs text-gray-600 flex justify-between hover:bg-gray-50 py-0.5 cursor-pointer rounded"
+                  className="text-xs text-gray-200 flex justify-between py-0.5 cursor-pointer rounded"
                   onClick={() => {
                     setIsDrawerOpen(true);
                     setSelectedHistoryItem(pos)
@@ -585,8 +587,8 @@ export function InfiniteGridMapComponent() {
                 >
                   <span className="font-mono">({pos.x}, {pos.y})</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400">{pos.direction}</span>
-                    <span className="text-gray-400">
+                    <span className="text-gray-300">{pos.direction}</span>
+                    <span className="text-gray-300">
                       {tardigradeHistory.length - index - 1 === 0
                         ? 'now'
                         : `${Math.floor((Date.now() - pos.timestamp) / 1000) < 60
@@ -609,7 +611,7 @@ export function InfiniteGridMapComponent() {
               )}
               <table className="w-full">
                 <thead>
-                  <tr className="text-xs text-gray-500">
+                  <tr className="text-xs text-gray-200">
                     <th className="text-left pb-2">Time</th>
                     <th className="text-left pb-2">From</th>
                     <th className="text-right pb-2">Amount</th>
@@ -630,12 +632,12 @@ export function InfiniteGridMapComponent() {
                     return (
                       <tr
                         key={index}
-                        className="text-xs text-gray-600 hover:bg-gray-50 cursor-pointer"
+                        className="text-xs text-gray-300 cursor-pointer"
                         onClick={() => window.open(`https://solscan.io/tx/${tx.signature}`, '_blank')}
                       >
                         <td className="py-1">{timeAgo}</td>
                         <td className="py-1">
-                          <span className="bg-gray-100 px-2 py-0.5 rounded-full">
+                          <span className="bg-black px-2 py-0.5 rounded-full">
                             {shortenHash(tx.from)}
                           </span>
                         </td>
@@ -712,16 +714,6 @@ export function InfiniteGridMapComponent() {
               <div>
                 <span className="font-semibold">Neural Output:</span>{' '}
                 {selectedHistoryItem.direction.charAt(0).toUpperCase() + selectedHistoryItem.direction.slice(1)}
-              </div>
-              <div className="mt-4">
-                <a
-                  href="/whitepaper.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
-                >
-                  Read the whitepaper <ExternalLink className="h-3 w-3" />
-                </a>
               </div>
             </div>
           )}
