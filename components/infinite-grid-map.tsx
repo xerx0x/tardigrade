@@ -11,6 +11,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Spotlight } from "@/components/ui/Spotlight";
 import AnimatedText from "@/components/ui/typing"
+
 const shortenHash = (hash: string): string => {
   if (!hash) return '';
   return `${hash.slice(0, 4)}...${hash.slice(-4)}`;
@@ -42,15 +43,18 @@ export function InfiniteGridMapComponent() {
   // Add this new function near other state declarations
   const animationRef = useRef<number>()
   const [, setIsLocating] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [recentTransactions, setRecentTransactions] = useState<ITransaction[]>([])
   const [activeTab, setActiveTab] = useState<'history' | 'recent'>('recent');
 
   const historyScreenPositionsRef = useRef<{ x: number, y: number, data: tardigradeHistory }[]>([])
 
+  const [isLoadingRpc, setIsLoadingRpc] = useState(false); // Separate loading state for /api/rpc
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false); // Separate loading state for /api/recent
+
   useEffect(() => {
     // start super zoomed out
-    const ZOOM_FACTOR = 1.5
+    const ZOOM_FACTOR = 0.2
     setCellSize(prev => prev * ZOOM_FACTOR)
     setDotSize(prev => prev * ZOOM_FACTOR)
     settardigradeSize(prev => prev * ZOOM_FACTOR)
@@ -58,16 +62,21 @@ export function InfiniteGridMapComponent() {
 
   // Disable pull to refresh
   useEffect(() => {
+    // Check if the device supports touch events
     const preventDefault = (e: TouchEvent) => {
       e.preventDefault();
     };
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    return () => {
-      document.removeEventListener('touchmove', preventDefault);
-    };
+  
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      // Attach event only for touch-enabled devices
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+  
+      // Cleanup function to remove the event listener
+      return () => {
+        document.removeEventListener('touchmove', preventDefault);
+      };
+    }
   }, []);
-
-
 
   useEffect(() => {
     const tardigradeImage = new Image();
@@ -77,220 +86,282 @@ export function InfiniteGridMapComponent() {
     };
   }, []);
 
+
   useEffect(() => {
     const fetchData = () => {
-      setIsLoading(true);
-      axios.get('/api/rpc').then((res) => {
-        const data = res.data;
-        settardigradeHistory(data);
-        setIsLoading(false);
-        const latesttardigradePosition = data[data.length - 1];
-        if (latesttardigradePosition) {
-          settardigradePosition({
-            x: latesttardigradePosition.x,
-            y: latesttardigradePosition.y
-          });
-          locatetardigrade();
-        }
-      });
-
+      setIsLoadingRpc(true); // Start loading for the first API
+      setIsLoadingRecent(true); // Start loading for the second API
+  
+      // Fetch RPC data
+      axios.get('/api/rpc')
+        .then((res) => {
+          const data = res.data;
+          settardigradeHistory(data);
+          const latesttardigradePosition = data[data.length - 1];
+          if (latesttardigradePosition) {
+            settardigradePosition({
+              x: latesttardigradePosition.x,
+              y: latesttardigradePosition.y
+            });
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching RPC data:', error);
+        })
+        .finally(() => {
+          setIsLoadingRpc(false); // Stop loading for the first API
+          setIsLoading(false);
+        });
+  
       // Fetch recent transactions
-      axios.get('/api/recent').then((res) => {
-        setRecentTransactions(res.data);
-      });
+      axios.get('/api/recent')
+        .then((res) => {
+          setRecentTransactions(res.data);
+        })
+        .catch((error) => {
+          console.error('Error fetching recent transactions:', error);
+        })
+        .finally(() => {
+          setIsLoadingRecent(false); // Stop loading for the second API
+        });
     };
-
+  
     // Initial fetch
     fetchData();
+    locatetardigrade()
 
     // Set up interval to fetch every minute
     const interval = setInterval(fetchData, 60000);
-
     // Cleanup interval on unmount
     return () => clearInterval(interval);
   }, []);
-
+  
+  
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)'
-    ctx.lineWidth = 0.5
-    ctx.font = '10px Arial'
-    ctx.fillStyle = '#ececec'
-
-    const startX = Math.floor(camera.x / cellSize) * cellSize - camera.x
-    const startY = Math.floor(camera.y / cellSize) * cellSize - camera.y
-
-    const dynamicLabelInterval = Math.max(1, Math.floor(40 / cellSize)); // Adjust based on zoom level
-
+    ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+    ctx.lineWidth = 0.5;
+    ctx.font = '10px Arial';
+    ctx.fillStyle = '#bbb';
+  
+    const startX = Math.floor(camera.x / cellSize) * cellSize - camera.x;
+    const startY = Math.floor(camera.y / cellSize) * cellSize - camera.y;
+  
+    // Adjust label interval based on zoom level, ensuring labels are not too frequent
+    const dynamicLabelInterval = Math.max(1, Math.floor(40 / cellSize)); 
+  
+    // Draw vertical grid lines
     for (let x = startX; x < width; x += cellSize) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, height)
-      ctx.stroke()
-      const gridX = Math.floor((x + camera.x) / cellSize)
-      if (gridX % dynamicLabelInterval === 0) { // Only display every 5th label
-        ctx.fillText(gridX.toString(), x + 2, 10)
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+  
+      const gridX = Math.floor((x + camera.x) / cellSize);
+      if (gridX % dynamicLabelInterval === 0) { 
+        ctx.fillText(gridX.toString(), x + 2, 10);
       }
     }
-
+  
+    // Draw horizontal grid lines
     for (let y = startY; y < height; y += cellSize) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(width, y)
-      ctx.stroke()
-      const gridY = Math.floor((y + camera.y) / cellSize)
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+  
+      const gridY = Math.floor((y + camera.y) / cellSize);
       if (gridY % dynamicLabelInterval === 0) {
-        ctx.fillText(gridY.toString(), 2, y - 2)
+        ctx.fillText(gridY.toString(), 2, y - 2);
       }
     }
-  }, [camera, cellSize])
+  
+  }, [camera, cellSize]);
 
   const drawDots = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    ctx.fillStyle = 'rgba(0, 100, 255, 0.7)'
+    ctx.fillStyle = 'rgba(0, 100, 255, 0.7)';
+    
+    // Only check the bounds once for performance.
+    const minX = -dotSize;
+    const maxX = width + dotSize;
+    const minY = -dotSize;
+    const maxY = height + dotSize;
+  
     gridRef.current.forEach((key) => {
-      const [x, y] = key.split(',').map(Number)
-      const screenX = x * cellSize - camera.x
-      const screenY = y * cellSize - camera.y
-      if (screenX >= -dotSize && screenX <= width + dotSize && screenY >= -dotSize && screenY <= height + dotSize) {
-        ctx.beginPath()
-        ctx.arc(screenX, screenY, dotSize / 2, 0, Math.PI * 2)
-        ctx.fill()
+      const [x, y] = key.split(',').map(Number);
+      const screenX = x * cellSize - camera.x;
+      const screenY = y * cellSize - camera.y;
+      
+      // Check if the dot is in the visible area
+      if (screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY) {
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, dotSize / 2, 0, Math.PI * 2);
+        ctx.fill();
       }
-    })
-  }, [camera, cellSize, dotSize])
+    });
+  }, [camera, cellSize, dotSize]);
+  
 
   const drawtardigradeHistory = useCallback((ctx: CanvasRenderingContext2D) => {
-    ctx.fillStyle = 'rgb(235, 235, 235)' // Light grey
-    // Skip drawing history point if it's at current tardigrade position
-    historyScreenPositionsRef.current = [] // Reset the array
-
+    // Cache current tardigrade position for efficient comparison
+    const { x: tardigradeX, y: tardigradeY } = tardigradePosition;
+  
+    // Reset history positions array once per render
+    historyScreenPositionsRef.current = [];
+  
     tardigradeHistory.forEach((historyItem) => {
-      // Make history point transparent if it's at current tardigrade position
-      if (historyItem.x === tardigradePosition.x && historyItem.y === tardigradePosition.y) {
-        ctx.fillStyle = 'rgba(128, 128, 128, 0)' // Very transparent grey
+      // Set fill style based on the position
+      if (historyItem.x === tardigradeX && historyItem.y === tardigradeY) {
+        ctx.fillStyle = 'rgba(128, 128, 128, 0)'; // Very transparent grey
+      } else if (historyItem.x === 0 && historyItem.y === 0) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'; // Red for origin
       } else {
-        ctx.fillStyle = 'rgb(214, 214, 214)' // Regular semi-transparent grey
+        ctx.fillStyle = 'rgb(214, 214, 214)'; // Regular grey
       }
-
-      // If origin, make it red
-      if (historyItem.x === 0 && historyItem.y === 0) {
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.7)' // Red
-      }
-
-      const screenX = historyItem.x * cellSize - camera.x
-      const screenY = historyItem.y * cellSize - camera.y
-
-      ctx.beginPath()
-      ctx.arc(screenX, screenY, tardigradeSize / 8, 0, Math.PI * 2)
-      ctx.fill()
-
-      // Store screen position and data for hit-testing
+  
+      // Calculate screen position
+      const screenX = historyItem.x * cellSize - camera.x;
+      const screenY = historyItem.y * cellSize - camera.y;
+  
+      // Draw the history point as a circle
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, tardigradeSize / 8, 0, Math.PI * 2);
+      ctx.fill();
+  
+      // Store screen position and data for hit-testing (only relevant ones)
       historyScreenPositionsRef.current.push({
         x: screenX,
         y: screenY,
         data: historyItem
-      })
-    })
-  }, [camera, tardigradeHistory, cellSize, dotSize, tardigradeSize])
+      });
+    });
+  }, [camera, tardigradeHistory, tardigradePosition, cellSize, tardigradeSize]);
+  
 
   const drawtardigrade = useCallback((ctx: CanvasRenderingContext2D) => {
     const screenX = tardigradePosition.x * cellSize - camera.x;
     const screenY = tardigradePosition.y * cellSize - camera.y;
-
-    // Draw tardigrade image if it's loaded
-    if (tardigradeImageRef.current) {
-      ctx.drawImage(tardigradeImageRef.current, screenX - tardigradeSize / 2, screenY - tardigradeSize / 2, tardigradeSize, tardigradeSize);
+  
+    // Ensure canvasRef.current is not undefined and access the canvas width and height
+    if (canvasRef.current) {
+      const canvasWidth = canvasRef.current.width;
+      const canvasHeight = canvasRef.current.height;
+  
+      // Check if tardigrade is within the canvas bounds before drawing
+      if (screenX + tardigradeSize / 2 > 0 && screenX - tardigradeSize / 2 < canvasWidth &&
+          screenY + tardigradeSize / 2 > 0 && screenY - tardigradeSize / 2 < canvasHeight) {
+        
+        // Draw tardigrade image if it's loaded
+        if (tardigradeImageRef.current) {
+          ctx.drawImage(tardigradeImageRef.current, screenX - tardigradeSize / 2, screenY - tardigradeSize / 2, tardigradeSize, tardigradeSize);
+        }
+  
+        // Draw label below the tardigrade
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';  // This can be optimized if the font size/style doesn't change
+        ctx.fillText('Tardi', screenX - 20, screenY + tardigradeSize * 0.5);
+      }
     }
-
-    // Add label below the tardigrade
-    ctx.fillStyle = 'white';
-    ctx.font = '12px Arial';
-    ctx.fillText('Tardi', screenX - 20, screenY + tardigradeSize * 0.5);
   }, [camera, tardigradePosition, cellSize, tardigradeSize]);
-
-
-
 
   useEffect(() => {
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
+      // Cancel the animation frame if it exists
+      if (animationRef.current !== undefined && animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const render = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
+  
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-
+  
+    // Optionally, set canvas size based on container dimensions
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+  
+    // Clear the canvas before drawing everything
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+  
+    // Draw grid, dots, tardigrade history, and tardigrade
     drawGrid(ctx, canvas.width, canvas.height)
     drawDots(ctx, canvas.width, canvas.height)
     drawtardigradeHistory(ctx)
     drawtardigrade(ctx)
-  }, [drawGrid, drawDots, drawtardigradeHistory, drawtardigrade])
-
+  
+  }, [drawGrid, drawDots, drawtardigradeHistory, drawtardigrade]);
+  
   useEffect(() => {
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-
+  
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-
+  
       const pixelRatio = window.devicePixelRatio || 1;
       const width = window.innerWidth;
       const height = window.innerHeight;
-
+  
       // Set canvas width and height according to pixel ratio for Retina displays
       canvas.width = width * pixelRatio;
       canvas.height = height * pixelRatio;
-
+  
       // Style width and height remain the same
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-
+  
       // Scale the context to match the pixel ratio
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
+  
+      // Re-render the canvas
       render();
-    }
-
-    window.addEventListener('resize', handleResize)
-    handleResize()
-
-    return () => window.removeEventListener('resize', handleResize)
-  }, [render])
+    };
+  
+    // Add resize event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Trigger resize handler once on component mount
+    handleResize();
+  
+    // Clean up on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [render]); // Only re-run when `render` changes
+  
 
   useEffect(() => {
-    render()
-  }, [cellSize, dotSize, tardigradeSize, render])
+    render();
+  }, [cellSize, dotSize, tardigradeSize]); // Only rerun when these values change
+  
 
   const handleZoom = (event: WheelEvent) => {
     event.preventDefault();
+    
     const zoomFactor = 1.05;
     const canvas = canvasRef.current;
     if (canvas) {
+      // Cancel ongoing animation when zooming
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         setIsLocating(false);
       }
-      if (event.deltaY < 0) {
-        // Zoom in
-        setCellSize(prev => prev * zoomFactor);
-        setDotSize(prev => prev * zoomFactor);
-        settardigradeSize(prev => prev * zoomFactor);
-      } else {
-        // Zoom out
-        setCellSize(prev => prev / zoomFactor);
-        setDotSize(prev => prev / zoomFactor);
-        settardigradeSize(prev => prev / zoomFactor);
-      }
-      render(); // Re-render the grid
+  
+      const scale = event.deltaY < 0 ? zoomFactor : 1 / zoomFactor;
+  
+      // Apply zoom factor to cell size, dot size, and tardigrade size
+      setCellSize(prev => prev * scale);
+      setDotSize(prev => prev * scale);
+      settardigradeSize(prev => prev * scale);
+  
+      render(); // Re-render the grid and other elements
     }
   };
+  
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -302,58 +373,70 @@ export function InfiniteGridMapComponent() {
         canvas.removeEventListener('wheel', handleZoom);
       }
     };
-  }, [render]);
+  }, [handleZoom]);
+    useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [])
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (e.button === 0) { // Left click
-      setIsDragging(true)
-      setLastMousePos({ x: e.clientX, y: e.clientY })
+      setIsDragging(true);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+  
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-        setIsLocating(false)
+        cancelAnimationFrame(animationRef.current);
+        setIsLocating(false);
       }
     } else if (e.button === 2) { // Right click
-      render()
+      render(); // Only trigger render if there's a specific reason
     }
-
+  
+    // Logic for selecting a history item when not dragging
     if (!isDragging && hoveredHistoryItem) {
-      setSelectedHistoryItem(hoveredHistoryItem)
-      setIsDrawerOpen(true)
-      setMousePos({ x: e.clientX, y: e.clientY })
+      setSelectedHistoryItem(hoveredHistoryItem);
+      setIsDrawerOpen(true);
+      setMousePos({ x: e.clientX, y: e.clientY });
     } else {
-      setHoveredHistoryItem(null)
+      setHoveredHistoryItem(null); // Reset hover if dragging
     }
-  }
+  };
+  
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isDragging) {
-      const dx = e.clientX - lastMousePos.x
-      const dy = e.clientY - lastMousePos.y
-      setCamera(prev => ({ x: prev.x - dx, y: prev.y - dy }))
-      setLastMousePos({ x: e.clientX, y: e.clientY })
+      const dx = e.clientX - lastMousePos.x;
+      const dy = e.clientY - lastMousePos.y;
+      setCamera(prev => ({ x: prev.x - dx, y: prev.y - dy }));
+      setLastMousePos({ x: e.clientX, y: e.clientY });
     } else {
       // Hit-test historical positions
-      const rect = canvasRef.current?.getBoundingClientRect()
+      const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
-        const x = e.clientX - rect.left
-        const y = e.clientY - rect.top
-
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+  
+        // Check if hovered item is different from the previous one to avoid unnecessary state updates
         const hoverItem = historyScreenPositionsRef.current.find(pos => {
-          const dx = x - pos.x
-          const dy = y - pos.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-          return distance <= tardigradeSize / 2 // Increased hit area
-        })
-
-        if (hoverItem) {
-          setHoveredHistoryItem(hoverItem.data)
-        } else {
-          setHoveredHistoryItem(null)
+          const dx = x - pos.x;
+          const dy = y - pos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          return distance <= tardigradeSize / 2; // Increased hit area
+        });
+  
+        if (hoverItem && hoveredHistoryItem !== hoverItem.data) {
+          setHoveredHistoryItem(hoverItem.data); // Only update if there's a change
+        } else if (!hoverItem) {
+          setHoveredHistoryItem(null); // Reset if no hover
         }
       }
-      setMousePos({ x: e.clientX, y: e.clientY })
+      setMousePos({ x: e.clientX, y: e.clientY });
     }
-  }
+  };
+  
 
   const handleMouseUp = () => {
     setIsDragging(false)
@@ -433,7 +516,6 @@ export function InfiniteGridMapComponent() {
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
-
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       <Spotlight
