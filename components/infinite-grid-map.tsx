@@ -630,12 +630,12 @@ export function InfiniteGridMapComponent() {
       
       <div className="fixed left-4 bottom-4 h-fit gap-2 w-72 max-w-72 flex flex-col">
           <a
-            href="/whitepaper.pdf"
+            href="https://docs.tardionchain.xyz/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-blue-300 hover:text-blue-400 flex bg-stone-900 border border-stone-600 w-full h-fit p-2 rounded-md items-center gap-1"
           >
-            Read the whitepaper <ExternalLink className="h-3 w-3" />
+            Read the docs <ExternalLink className="h-3 w-3" />
           </a>
           <AnimatedText />
       </div>
